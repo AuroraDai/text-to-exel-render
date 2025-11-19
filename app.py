@@ -52,6 +52,7 @@ if uploaded_file is not None:
     dframebr = pd.DataFrame()
     dframews = pd.DataFrame()
     dframewl = pd.DataFrame()
+    dframece = pd.DataFrame()
     
     df_dict = {}
     loadnameindex = text.find("Loadcase ID:")
@@ -182,6 +183,8 @@ if uploaded_file is not None:
                     dframebr = pd.concat([dframebr, df], axis=1)
                 elif "WL" in name:
                     dframewl = pd.concat([dframewl, df], axis=1)
+                elif "CE" in name:
+                    dframece = pd.concat([dframece, df], axis=1)
                 else:
                     dframell = pd.concat([dframell, df], axis=1)
             else:
@@ -299,21 +302,23 @@ if uploaded_file is not None:
                     st.code(repr(actual_pattern), language='text')
     
     # Show statistics
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1:
         st.metric("DC Cases", len([k for k in df_dict.keys() if "DC" in k]))
     with col2:
-        st.metric("LL Cases", len([k for k in df_dict.keys() if "LL" in k and "DC" not in k and "WS" not in k and "BR" not in k and "WL" not in k]))
+        st.metric("LL Cases", len([k for k in df_dict.keys() if "LL" in k and "DC" not in k and "WS" not in k and "BR" not in k and "WL" not in k and "CE" not in k]))
     with col3:
         st.metric("BR Cases", len([k for k in df_dict.keys() if "BR" in k]))
     with col4:
         st.metric("WS Cases", len([k for k in df_dict.keys() if "WS" in k]))
     with col5:
         st.metric("WL Cases", len([k for k in df_dict.keys() if "WL" in k]))
+    with col6:
+        st.metric("CE Cases", len([k for k in df_dict.keys() if "CE" in k]))
     
     # Create Excel file in memory only if there's data to write
     has_data = (not dframedc.empty or not dframell.empty or not dframebr.empty or 
-                not dframews.empty or not dframewl.empty)
+                not dframews.empty or not dframewl.empty or not dframece.empty)
     
     if has_data:
         output = BytesIO()
@@ -328,6 +333,8 @@ if uploaded_file is not None:
                 dframews.to_excel(writer, sheet_name='WS', index=False)
             if not dframewl.empty:
                 dframewl.to_excel(writer, sheet_name='WL', index=False)
+            if not dframece.empty:
+                dframece.to_excel(writer, sheet_name='CE', index=False)
         
         output.seek(0)
         
@@ -345,7 +352,7 @@ if uploaded_file is not None:
     # Display preview of data
     st.subheader("📋 Data Preview")
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["DC", "LL", "BR", "WS", "WL"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["DC", "LL", "BR", "WS", "WL", "CE"])
     
     with tab1:
         if not dframedc.empty:
@@ -376,6 +383,12 @@ if uploaded_file is not None:
             st.dataframe(dframewl, use_container_width=True)
         else:
             st.info("No WL load cases found.")
+    
+    with tab6:
+        if not dframece.empty:
+            st.dataframe(dframece, use_container_width=True)
+        else:
+            st.info("No CE load cases found.")
     
     # Show all load case names
     with st.expander("📝 View all load case names"):
